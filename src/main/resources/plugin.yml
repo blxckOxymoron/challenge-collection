@@ -3,3 +3,9 @@ version: ${project.version}
 main: blxckoxymoron.challenges.Challenges
 api-version: 1.16
 authors: [ blxckOxymoron ]
+description: Challenge Plugin
+
+commands:
+  challenge:
+    usage: /challenge
+    description: opens challenge gui
