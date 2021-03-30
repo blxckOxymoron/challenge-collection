@@ -1,0 +1,5 @@
+name: Challenges
+version: ${project.version}
+main: blxckoxymoron.challenges.Challenges
+api-version: 1.16
+authors: [ blxckOxymoron ]
