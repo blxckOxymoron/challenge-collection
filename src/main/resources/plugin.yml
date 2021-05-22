@@ -1,11 +1,5 @@
-name: Challenges
+name: Minigames
 version: ${project.version}
-main: blxckoxymoron.challenges.Challenges
+main: de.blxckoxymoron.minigames.Minigames
 api-version: 1.16
-authors: [ blxckOxymoron ]
-description: Challenge Plugin
-
-commands:
-  challenge:
-    usage: /challenge
-    description: opens challenge gui
+authors: [Oxymoron]
