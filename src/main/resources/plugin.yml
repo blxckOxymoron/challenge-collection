@@ -2,4 +2,4 @@ name: Minigames
 version: ${project.version}
 main: de.blxckoxymoron.minigames.Minigames
 api-version: 1.16
-authors: [Oxymoron]
+authors: [ Oxymoron ]
