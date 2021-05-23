@@ -7,9 +7,13 @@ import de.blxckoxymoron.minigames.utils.CommandUtils;
 
 public class PvEArena extends Minigame {
 
+    public PvEArena() {
+        setGameName("PvE Arena");
+    }
+
     @Override
     public void registerCommands(Minigames plugin) {
-        CommandUtils.setTabExecutor(plugin.getCommand("arena"), new ArenaCommand());
+        CommandUtils.setTabExecutor(plugin.getCommand("arena"), new ArenaCommand(this.chat));
     }
 
     @Override
