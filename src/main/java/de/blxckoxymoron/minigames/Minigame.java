@@ -1,6 +1,10 @@
 package de.blxckoxymoron.minigames;
 
-public interface Minigame {
-    void registerCommands(Minigames plugin);
-    void registerEvents(Minigames plugin);
+public class Minigame {
+    public void registerCommands(Minigames plugin) {
+
+    }
+    public void registerEvents(Minigames plugin) {
+
+    }
 }
