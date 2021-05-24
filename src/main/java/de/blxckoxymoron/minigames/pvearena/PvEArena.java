@@ -7,6 +7,8 @@ import de.blxckoxymoron.minigames.utils.CommandUtils;
 
 public class PvEArena extends Minigame {
 
+
+
     public PvEArena() {
         setGameName("PvE Arena");
     }
