@@ -12,7 +12,8 @@ public class CommandUtils {
         command.setExecutor(executor);
         command.setTabCompleter(executor);
     }
-    public static List<String> matchingOptions(List<String> openOptions, String arg) {
+
+    public static List<String> matchingOptions(String arg, String... openOptions) {
 
         List<String> options = new LinkedList<>();
 

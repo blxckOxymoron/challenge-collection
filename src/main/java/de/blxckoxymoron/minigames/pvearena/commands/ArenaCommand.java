@@ -1,6 +1,7 @@
 package de.blxckoxymoron.minigames.pvearena.commands;
 
 import de.blxckoxymoron.minigames.utils.ChatUtils;
+import de.blxckoxymoron.minigames.utils.CommandUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -40,18 +41,12 @@ public class ArenaCommand implements TabExecutor {
 
         List<String> options = new ArrayList<>();
 
-
         switch (args.length) {
             case 1: {
-                List<String> openOptions = Arrays.asList("create", "delete", "teleport", "edit");
-                for (String option : openOptions) {
-                    if (option.startsWith(args[0])) {
-                        options.add(option);
-                    }
-                }
+                return CommandUtils.matchingOptions(args[0], "create", "delete", "teleport", "edit");
             }
             case 2: {
-                options = Arrays.asList("name1", "name2");
+                return CommandUtils.matchingOptions(args[1], "name1", "name2");
             }
         }
 
