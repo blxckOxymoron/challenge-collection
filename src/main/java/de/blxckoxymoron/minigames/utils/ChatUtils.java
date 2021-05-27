@@ -15,13 +15,13 @@ public class ChatUtils {
     }
 
     public void sendMessage(CommandSender target, String message) {
-        target.sendMessage(ChatColor.WHITE + "[" + MessageColor.NAME + senderName + ChatColor.WHITE + "]" + MessageColor.MESSAGE + message);
+        target.sendMessage(ChatColor.WHITE + "[" + MessageColor.NAME + senderName + ChatColor.WHITE + "] " + MessageColor.MESSAGE + message);
     }
     public void sendInfo(CommandSender target, String message) {
-        target.sendMessage(ChatColor.WHITE + "[" + MessageColor.NAME + senderName + ChatColor.WHITE + "]" + MessageColor.INFO + message);
+        target.sendMessage(ChatColor.WHITE + "[" + MessageColor.NAME + senderName + ChatColor.WHITE + "] " + MessageColor.INFO + message);
     }
     public void sendError(CommandSender target, String message) {
-        target.sendMessage(ChatColor.WHITE + "[" + MessageColor.NAME + senderName + ChatColor.WHITE + "]" + ChatColor.RED + " •Error• " + MessageColor.ERROR + message);
+        target.sendMessage(ChatColor.WHITE + "[" + MessageColor.NAME + senderName + ChatColor.WHITE + "]" + ChatColor.RED + " Error: " + MessageColor.ERROR + message);
     }
 
     public enum MessageColor {

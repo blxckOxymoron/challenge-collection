@@ -6,5 +6,5 @@ authors: [ Oxymoron ]
 
 commands:
   arena:
-    usage: "§cUsage: §e/arena <§6create§e|§6delete§e|§6teleport§e|§6edit§e> <§6name§e> [§6id§e]"
+    usage: "§cUsage: §e/arena <§6create§e|§6delete§e|§6teleport§e|§6edit§e|§6list§e> <§6name§e> [§6id§e]"
     description: edit arenas

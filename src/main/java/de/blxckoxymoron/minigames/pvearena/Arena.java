@@ -5,13 +5,13 @@ import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Arena {
 
     public static final String BASE_PATH = "pvearena.arenas";
     public static int currArenaId = 0;
+    public static FileConfiguration defaultConfig = Minigames.getPlugin().getConfig();
 
     public String name;
     public int id; // Unique!
@@ -36,8 +36,7 @@ public class Arena {
     }
 
     public void setToConfig() {
-        setToConfig(Minigames.getPlugin().getConfig());
-        Minigames.getPlugin().saveConfig();
+        setToConfig(defaultConfig);
     }
 
     /**
@@ -57,7 +56,7 @@ public class Arena {
     }
 
     public void setFromConfig() {
-        setFromConfig(Minigames.getPlugin().getConfig());
+        setFromConfig(defaultConfig);
     }
 
     public void setFromConfig(FileConfiguration config) {
@@ -101,9 +100,8 @@ public class Arena {
     }
 
     public static Integer getNewArenaId() {
-        FileConfiguration config = Minigames.getPlugin().getConfig();
 
-        while (config.contains(BASE_PATH + "." + currArenaId)) {
+        while (defaultConfig.contains(BASE_PATH + "." + currArenaId)) {
             currArenaId++;
         }
 
@@ -111,6 +109,23 @@ public class Arena {
     }
 
 
+    public static Set<String> getArenaNames() {
+        Set<String> result = new HashSet<>();
+        for (String id : defaultConfig.getConfigurationSection(BASE_PATH).getKeys(false)) {
+           result.add(defaultConfig.getString(BASE_PATH + "." + id + ".name"));
+        }
+        return result;
+    }
+
+    public static Set<String> getArenaIds(String arenaName) {
+        Set<String> result = new HashSet<>();
+        for (String id : defaultConfig.getConfigurationSection(BASE_PATH).getKeys(false)) {
+            if (defaultConfig.getString(BASE_PATH + "." + id + ".name").matches(arenaName)) {
+                result.add(id);
+            }
+        }
+        return result;
+    }
 
     public HashMap<EntityType, Integer> getMobs() {
         return mobs;
