@@ -1,6 +1,5 @@
 package de.blxckoxymoron.minigames.pvearena;
 
-import de.blxckoxymoron.minigames.Minigame;
 import de.blxckoxymoron.minigames.Minigames;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
