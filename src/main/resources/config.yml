@@ -1,1 +1,4 @@
-test: true
+arenas:
+  arena1:
+    mobs:
+

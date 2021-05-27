@@ -6,7 +6,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Minigames extends JavaPlugin {
 
-    public Minigames plugin;
+    public static Minigames plugin;
     
     @Override
     public void onEnable() {
@@ -27,7 +27,7 @@ public final class Minigames extends JavaPlugin {
         
     }
 
-    public Minigames getPlugin() {
+    public static Minigames getPlugin() {
         return plugin;
     }
 
