@@ -3,11 +3,10 @@ package de.blxckoxymoron.minigames.pvearena;
 import de.blxckoxymoron.minigames.Minigame;
 import de.blxckoxymoron.minigames.Minigames;
 import de.blxckoxymoron.minigames.pvearena.commands.ArenaCommand;
+import de.blxckoxymoron.minigames.pvearena.listeners.InventoryCloseListener;
 import de.blxckoxymoron.minigames.utils.CommandUtils;
-import org.bukkit.GameRule;
-import org.bukkit.World;
-import org.bukkit.WorldCreator;
-import org.bukkit.WorldType;
+import org.bukkit.*;
+import org.bukkit.plugin.PluginManager;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -34,7 +33,8 @@ public class PvEArena extends Minigame {
 
     @Override
     public void registerEvents(Minigames plugin) {
-
+        PluginManager manager = Bukkit.getPluginManager();
+        manager.registerEvents(new InventoryCloseListener(), plugin);
     }
 
 }

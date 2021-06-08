@@ -1,13 +1,13 @@
 package de.blxckoxymoron.minigames.pvearena;
 
 import de.blxckoxymoron.minigames.Minigames;
+import de.blxckoxymoron.minigames.utils.ChatUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
-import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -16,10 +16,11 @@ import java.util.*;
 public class Arena {
 
     public static final String BASE_PATH = "pvearena.arenas";
+    public static final String INVENTORY_PREFIX = ChatUtils.MessageColor.NAME + "ArenaInventory" + ChatColor.GRAY + " | " + ChatColor.WHITE;
     public static int currArenaId = 0;
     public static FileConfiguration defaultConfig = Minigames.getPlugin().getConfig();
 
-    private Inventory mobInventory = Bukkit.createInventory(null, 54, ChatColor.GREEN + "Mob-Spawneggs");
+    private Inventory mobInventory = Bukkit.createInventory(null, 54, INVENTORY_PREFIX + "Mob-Spawneggs");
 
     public String name;
     public int id; // Unique!
@@ -184,7 +185,6 @@ public class Arena {
         Minigames.getPlugin().saveConfig();
     }
 
-
     public static Arena getArena(int id) {
         for (Arena a : PvEArena.loadedArenas) {
             if (a.id == id) return a;
@@ -198,6 +198,12 @@ public class Arena {
         return createNewAndSave(id);
     }
 
+    public static void updateInventories() {
+        for (Arena a : PvEArena.loadedArenas) {
+            a.saveMobInventory();
+        }
+    }
+
     public Inventory getMobInventory() {
 
         setToConfig();
@@ -209,6 +215,22 @@ public class Arena {
         }
 
         return mobInventory;
+    }
+
+    public void saveMobInventory() {
+        mobs.clear();
+        for (ItemStack itemStack : mobInventory.getContents()) {
+            if (itemStack != null) {
+                String type = itemStack.getType().name();
+                if (type.endsWith("_SPAWN_EGG")) {
+                    try {
+                        mobs.put(EntityType.valueOf(type.replace("_SPAWN_EGG", "")), itemStack.getAmount());
+                    } catch (Exception e) {
+                        System.out.println("Error with Spawnegg: " + type);
+                    }
+                }
+            }
+        }
     }
 
     public HashMap<EntityType, Integer> getMobs() {
