@@ -5,11 +5,16 @@ import de.blxckoxymoron.minigames.pvearena.Arena;
 import de.blxckoxymoron.minigames.utils.ChatUtils;
 import de.blxckoxymoron.minigames.utils.CommandUtils;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SpawnEggMeta;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,7 +67,7 @@ public class ArenaCommand implements TabExecutor {
 
                 String arenaName = args[1];
                 int arenaId = -1;
-                if (args.length == 3) {
+                if (args.length >= 3) {
                     try {
                         arenaId = Integer.parseInt(args[2]);
                     } catch (NumberFormatException e) {
@@ -75,6 +80,30 @@ public class ArenaCommand implements TabExecutor {
                     }
                 }
 
+                if (Arrays.asList("delete", "teleport", "edit", "mobs").contains(args[0])) {
+                    Set<String> arenaIds = Arena.getArenaIds(arenaName);
+                    if (arenaId == -1) {
+                        if (arenaIds.size() > 1) {
+                            commandChat.sendError(sender, "" +
+                                    "More than 1 arenas with name " + ChatColor.YELLOW + arenaName + ChatUtils.MessageColor.ERROR +
+                                    "! Please specify one of these ids: " + ChatColor.YELLOW + arenaIds.toString());
+                            return true;
+                        } else if (arenaIds.size() < 1) {
+                            commandChat.sendError(sender, "No arena with name " + ChatColor.YELLOW + arenaName);
+                            return true;
+                        } else {
+                            arenaId = Integer.parseInt((String) arenaIds.toArray()[0]);
+                        }
+                    } else if (!arenaIds.contains(Integer.toString(arenaId))) {
+                        commandChat.sendError(sender, "No arena with name " + ChatColor.YELLOW + arenaName + ChatUtils.MessageColor.ERROR + " and id " + ChatColor.YELLOW + arenaId);
+                        return true;
+
+                    }
+                }
+
+                sender.sendMessage(String.valueOf(arenaId));
+
+
                 switch (args[0]) {
                     case "create": {
 
@@ -86,9 +115,7 @@ public class ArenaCommand implements TabExecutor {
                             commandChat.sendError(sender,  ChatColor.YELLOW + "id '" + arenaId + "' " + ChatUtils.MessageColor.ERROR + "already exists!");
                             return true;
                         }
-                        new Arena(arenaId, arenaName){{
-                            setToConfig(config);
-                        }};
+                        Arena.createNewAndSave(arenaId, arenaName);
                         plugin.saveConfig();
 
                         commandChat.sendMessage(sender, "Created Arena with name " + ChatColor.YELLOW + arenaName + ChatUtils.MessageColor.MESSAGE + " and id " + ChatColor.YELLOW + arenaId);
@@ -96,28 +123,7 @@ public class ArenaCommand implements TabExecutor {
                     }
                     case "delete": {
 
-                        Set<String> arenaIds = Arena.getArenaIds(arenaName);
-                        if (arenaId == -1) {
-                            if (arenaIds.size() > 1) {
-                                commandChat.sendError(sender, "" +
-                                        "More than 1 arenas with name " + ChatColor.YELLOW + arenaName + ChatUtils.MessageColor.ERROR +
-                                        "! Please specify one of these ids: " + ChatColor.YELLOW + arenaIds.toString());
-                                return true;
-                            } else if (arenaIds.size() < 1) {
-                                commandChat.sendError(sender, "No arena with name " + ChatColor.YELLOW + arenaName);
-                                return true;
-                            } else {
-                                arenaId = Integer.parseInt((String) arenaIds.toArray()[0]);
-                            }
-                        } else if (!arenaIds.contains(Integer.toString(arenaId))) {
-                            commandChat.sendError(sender, "No arena with name " + ChatColor.YELLOW + arenaName + ChatUtils.MessageColor.ERROR + " and id " + ChatColor.YELLOW + arenaId);
-                            return true;
-
-                        }
-
-                        config.set(Arena.BASE_PATH + "." + arenaId, null);
-                        Arena.currArenaId = arenaId;
-                        plugin.saveConfig();
+                        Arena.deleteArena(arenaId);
 
                         commandChat.sendMessage(sender, "Deleted Arena with name: " + ChatColor.YELLOW + arenaName + ChatUtils.MessageColor.MESSAGE + " and id: " + ChatColor.YELLOW + arenaId);
                         break;
@@ -131,9 +137,28 @@ public class ArenaCommand implements TabExecutor {
                         if (!(sender instanceof Entity)) {commandChat.sendError(sender, "You are not an Entity!"); return false;}
                         Entity senderEntity = (Entity) sender;
 
+                        senderEntity.teleport(Arena.getArena(arenaId).getSpawnLocation());
+
                         break;
                     }
+                    case "mobs": {
+                        if (!(sender instanceof Player)) {commandChat.sendError(sender, "You are not a Player!"); return false;}
+                        Player senderPlayer = (Player) sender;
+
+                        senderPlayer.openInventory(Arena.getArena(arenaId).getMobInventory());
+                    }
                     case "edit": {
+                        if (!(sender instanceof Player)) {commandChat.sendError(sender, "You are not an Entity!"); return false;}
+                        Player senderEntity = (Player) sender;
+
+                        ItemStack stack = new ItemStack(Material.BAT_SPAWN_EGG);
+                        if (senderEntity.getInventory().getItemInMainHand().getType().name().endsWith("_SPAWN_EGG")) {
+                            stack = senderEntity.getInventory().getItemInMainHand();
+                        }
+
+                        String entityName = stack.getType().name().replace("_SPAWN_EGG", "");
+                        sender.sendMessage(entityName);
+                        senderEntity.getWorld().spawnEntity(senderEntity.getLocation(), EntityType.valueOf(entityName));
                         break;
                     }
                     default: {
@@ -156,13 +181,19 @@ public class ArenaCommand implements TabExecutor {
 
         switch (args.length) {
             case 1: {
-                return CommandUtils.matchingOptions(args[0], "create", "delete", "teleport", "edit", "list");
+                return CommandUtils.matchingOptions(args[0], "create", "delete", "teleport", "edit", "list", "mobs");
             }
             case 2: {
-                if (!Arrays.asList("create", "delete", "teleport", "edit").contains(args[0])) {
+                if (!Arrays.asList("delete", "teleport", "edit", "mobs").contains(args[0])) {
                     return empty;
                 }
                 return CommandUtils.matchingOptions(args[1], Arena.getArenaNames().toArray(new String[0]));
+            }
+            case 3: {
+                if (!Arrays.asList("create", "delete", "teleport", "edit", "mobs").contains(args[0])) {
+                    return empty;
+                }
+                return CommandUtils.matchingOptions(args[2], Arena.getArenaIds(args[1]).toArray(new String[0]));
             }
         }
 
