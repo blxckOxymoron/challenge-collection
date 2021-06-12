@@ -23,6 +23,8 @@ public class Minigame {
         this.chat = new ChatUtils(gameName);
     }
 
+    public void onDisable() {}
+
     public ChatUtils getChat() {
         return chat;
     }

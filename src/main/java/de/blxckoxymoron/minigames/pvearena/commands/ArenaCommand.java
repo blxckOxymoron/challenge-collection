@@ -14,7 +14,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.SpawnEggMeta;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +30,8 @@ public class ArenaCommand implements TabExecutor {
      */
 
     public ChatUtils commandChat;
+    public static List<String> arenaArguments = Arrays.asList("delete", "teleport", "edit", "mobloot", "bossloot", "bossmob");
+    public static List<String> allOptions = Arrays.asList("delete", "teleport", "edit", "create", "list", "mobloot", "bossloot", "bossmob", "next");
 
     public ArenaCommand(ChatUtils commandChat) {
         this.commandChat = commandChat;
@@ -42,8 +43,10 @@ public class ArenaCommand implements TabExecutor {
         Minigames plugin = Minigames.getPlugin();
         FileConfiguration config = plugin.getConfig();
 
+
         switch (args.length) {
             case 0: {
+                // TODO: 09.06.2021 Change info 
                 commandChat.sendError(sender, "No argument for: " + ChatColor.YELLOW + "<create|delete|teleport|edit|list>");
                 return false;
             }
@@ -62,7 +65,8 @@ public class ArenaCommand implements TabExecutor {
 
             }
             case 2:
-            case 3: {
+            case 3:
+            case 4: {
                 //TODO correct arguments
 
                 String arenaName = args[1];
@@ -79,8 +83,12 @@ public class ArenaCommand implements TabExecutor {
                         return false;
                     }
                 }
+                if (args.length >= 4 && !args[0].equals("bossmob")) {
+                    commandChat.sendError(sender, "Too many Arguments!");
+                    return false;
+                }
 
-                if (Arrays.asList("delete", "teleport", "edit", "mobs").contains(args[0])) {
+                if (arenaArguments.contains(args[0])) {
                     Set<String> arenaIds = Arena.getArenaIds(arenaName);
                     if (arenaId == -1) {
                         if (arenaIds.size() > 1) {
@@ -101,7 +109,7 @@ public class ArenaCommand implements TabExecutor {
                     }
                 }
 
-                sender.sendMessage(String.valueOf(arenaId));
+//                sender.sendMessage(String.valueOf(arenaId));
 
 
                 switch (args[0]) {
@@ -141,11 +149,34 @@ public class ArenaCommand implements TabExecutor {
 
                         break;
                     }
-                    case "mobs": {
+                    case "bosssmob": {
+                        if (args.length != 4) {
+                            commandChat.sendError(sender, "To few Arguments!");
+                            return false;
+                        } else {
+                            try {
+                                Arena arena = Arena.getArena(arenaId);
+                                arena.setBoss(EntityType.valueOf(args[3]));
+                            } catch (IllegalArgumentException e) {
+                                commandChat.sendError(sender, "Unknown Argument: " + args[3]);
+                                return false;
+                            }
+                        }
+                        break;
+                    }
+                    case "mobloot": {
                         if (!(sender instanceof Player)) {commandChat.sendError(sender, "You are not a Player!"); return false;}
                         Player senderPlayer = (Player) sender;
 
-                        senderPlayer.openInventory(Arena.getArena(arenaId).getMobInventory());
+                        senderPlayer.openInventory(Arena.getArena(arenaId).getLootInventory(Arena.LootInventory.DEFAULT_LOOT));
+                        break;
+                    }
+                    case "bossloot": {
+                        if (!(sender instanceof Player)) {commandChat.sendError(sender, "You are not a Player!"); return false;}
+                        Player senderPlayer = (Player) sender;
+
+                        senderPlayer.openInventory(Arena.getArena(arenaId).getLootInventory(Arena.LootInventory.BOSS_LOOT));
+                        break;
                     }
                     case "edit": {
                         if (!(sender instanceof Player)) {commandChat.sendError(sender, "You are not an Entity!"); return false;}
@@ -160,6 +191,9 @@ public class ArenaCommand implements TabExecutor {
                         sender.sendMessage(entityName);
                         senderEntity.getWorld().spawnEntity(senderEntity.getLocation(), EntityType.valueOf(entityName));
                         break;
+                    }
+                    case "next": {
+
                     }
                     default: {
                         commandChat.sendError(sender, "Wrong argument for: " + ChatColor.YELLOW + "<create|delete|teleport|edit|list>");
@@ -181,19 +215,28 @@ public class ArenaCommand implements TabExecutor {
 
         switch (args.length) {
             case 1: {
-                return CommandUtils.matchingOptions(args[0], "create", "delete", "teleport", "edit", "list", "mobs");
+                return CommandUtils.matchingOptions(args[0], allOptions.toArray(new String[0]));
             }
             case 2: {
-                if (!Arrays.asList("delete", "teleport", "edit", "mobs").contains(args[0])) {
+                if (!arenaArguments.contains(args[0])) {
                     return empty;
                 }
                 return CommandUtils.matchingOptions(args[1], Arena.getArenaNames().toArray(new String[0]));
             }
             case 3: {
-                if (!Arrays.asList("create", "delete", "teleport", "edit", "mobs").contains(args[0])) {
+                if (!arenaArguments.contains(args[0])) {
                     return empty;
                 }
                 return CommandUtils.matchingOptions(args[2], Arena.getArenaIds(args[1]).toArray(new String[0]));
+            }
+            case 4: {
+                if (args[0].equals("bossmob")) {
+                    List<String> entityTypes = new ArrayList<>();
+                    for (EntityType entityType : EntityType.values()) {
+                        entityTypes.add(entityType.name());
+                    }
+                    return entityTypes;
+                }
             }
         }
 

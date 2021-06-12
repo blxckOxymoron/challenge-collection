@@ -27,6 +27,15 @@ public class PvEArena extends Minigame {
     }
 
     @Override
+    public void onDisable() {
+        Arena.updateInventories();
+        for (Arena a : loadedArenas) {
+            a.setToConfig();
+        }
+        Minigames.getPlugin().saveConfig();
+    }
+
+    @Override
     public void registerCommands(Minigames plugin) {
         CommandUtils.setTabExecutor(plugin.getCommand("arena"), new ArenaCommand(this.chat));
     }

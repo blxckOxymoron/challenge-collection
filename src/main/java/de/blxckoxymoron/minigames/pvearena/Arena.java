@@ -8,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -18,9 +19,15 @@ public class Arena {
     public static final String BASE_PATH = "pvearena.arenas";
     public static final String INVENTORY_PREFIX = ChatUtils.MessageColor.NAME + "ArenaInventory" + ChatColor.GRAY + " | " + ChatColor.WHITE;
     public static int currArenaId = 0;
+    public static Map<Player, Integer> playerArenaIdMap = new HashMap<>();
     public static FileConfiguration defaultConfig = Minigames.getPlugin().getConfig();
+    public static void saveDefaultConfig() {
+        Minigames.getPlugin().saveConfig();
+    }
 
-    private Inventory mobInventory = Bukkit.createInventory(null, 54, INVENTORY_PREFIX + "Mob-Spawneggs");
+    private Inventory mobInv = Bukkit.createInventory(null, 54, INVENTORY_PREFIX + "Mob-Spawneggs");
+    private Inventory bossLootInv = Bukkit.createInventory(null, 54, INVENTORY_PREFIX + "Boss-Loot");
+    private Inventory defaultLootInv = Bukkit.createInventory(null, 54, INVENTORY_PREFIX + "Default-Loot");
 
     public String name;
     public int id; // Unique!
@@ -141,7 +148,6 @@ public class Arena {
         return currArenaId;
     }
 
-
     public static Set<String> getArenaNames() {
         Set<String> result = new HashSet<>();
         for (String id : defaultConfig.getConfigurationSection(BASE_PATH).getKeys(false)) {
@@ -200,37 +206,148 @@ public class Arena {
 
     public static void updateInventories() {
         for (Arena a : PvEArena.loadedArenas) {
-            a.saveMobInventory();
+            a.saveMobInventory(false);
+            a.saveLootInventories(false);
         }
+        saveDefaultConfig();
     }
 
-    public Inventory getMobInventory() {
-
-        setToConfig();
-        Minigames.getPlugin().saveConfig();
-        if (mobInventory.isEmpty()) {
-            for (EntityType mob : mobs.keySet()) {
-                mobInventory.addItem(new ItemStack(Material.valueOf(mob.name() + "_SPAWN_EGG"), mobs.get(mob)));
+    public static EntityType spawneggToEntity(String spawneggEntityName) throws IllegalArgumentException {
+        spawneggEntityName = spawneggEntityName.toUpperCase();
+        try {
+            return EntityType.valueOf(spawneggEntityName);
+        } catch (Exception e) {
+            if (defaultConfig.contains("pvearena.spawnegg-mobs." + spawneggEntityName)) {
+                return EntityType.valueOf(defaultConfig.getString("pvearena.spawnegg-mobs." + spawneggEntityName));
             }
+            throw e;
         }
-
-        return mobInventory;
     }
 
-    public void saveMobInventory() {
-        mobs.clear();
-        for (ItemStack itemStack : mobInventory.getContents()) {
-            if (itemStack != null) {
-                String type = itemStack.getType().name();
-                if (type.endsWith("_SPAWN_EGG")) {
-                    try {
-                        mobs.put(EntityType.valueOf(type.replace("_SPAWN_EGG", "")), itemStack.getAmount());
-                    } catch (Exception e) {
-                        System.out.println("Error with Spawnegg: " + type);
-                    }
+    public static Material entityToSpawnegg(String entityName) throws IllegalArgumentException {
+        entityName = entityName.toUpperCase();
+        try {
+            return Material.valueOf(entityName + "_SPAWN_EGG");
+        } catch (Exception e) {
+            Map<String, Object> spawneggMobs = defaultConfig.getConfigurationSection("pvearena.spawnegg-mobs").getValues(false);
+            for (String k : spawneggMobs.keySet()) {
+                if (spawneggMobs.get(k).equals(entityName)) {
+                    return Material.valueOf(k + "_SPAWN_EGG");
+                }
+            }
+            throw e;
+        }
+    }
+
+    public static void playerToNextArena(Player player) {
+        if (playerArenaIdMap.containsKey(player)) {
+            Arena nextArena = Arena.getArena(playerArenaIdMap.get(player)).getNextArena();
+            player.teleport(nextArena.getSpawnLocation());
+            playerArenaIdMap.put(player, nextArena.getId());
+        }
+    }
+
+    public Inventory getMobInv() {
+
+        if (mobInv.isEmpty()) {
+            for (EntityType mob : mobs.keySet()) {
+                try {
+                    mobInv.addItem(new ItemStack(entityToSpawnegg(mob.name()), mobs.get(mob)));
+                } catch (Exception e) {
+                    System.out.println("Error with Mob: " + mob.name());
                 }
             }
         }
+
+        return mobInv;
+    }
+
+    public void saveMobInventory() {
+        saveMobInventory(true);
+    }
+
+    public void saveMobInventory(boolean save) {
+        mobs.clear();
+        for (ItemStack itemStack : mobInv.getContents()) {
+            if (itemStack == null) continue;
+            String type = itemStack.getType().name().replace("_SPAWN_EGG", "");
+            try {
+                EntityType entityType = spawneggToEntity(type);
+                if (mobs.containsKey(entityType)) {
+                    mobs.put(entityType, mobs.get(entityType) + itemStack.getAmount());
+                } else {
+                    mobs.put(entityType, itemStack.getAmount());
+                }
+            } catch (Exception e) {
+                System.out.println("Error with Spawnegg: " + type);
+            }
+        }
+        setToConfig();
+        if (save) saveDefaultConfig();
+    }
+
+    public Inventory getLootInventory(LootInventory inventory) {
+        switch (inventory) {
+            case BOSS_LOOT: {
+                if (bossLootInv.isEmpty()) {
+                    bossLoot.keySet().forEach(m -> bossLootInv.addItem( new ItemStack(m, bossLoot.get(m) ) ) );
+                }
+                return bossLootInv;
+            }
+            case DEFAULT_LOOT: {
+                if (defaultLootInv.isEmpty()) {
+                    defaultLoot.keySet().forEach(m -> defaultLootInv.addItem( new ItemStack(m, bossLoot.get(m) ) ) );
+                }
+                return defaultLootInv;
+            }
+            default: {
+                throw new IllegalArgumentException("Unsupported Inventory!");
+            }
+        }
+    }
+
+    public void saveLootInventories() {
+        saveLootInventories(true);
+    }
+
+    public void saveLootInventories(boolean save) {
+        bossLoot.clear();
+        defaultLoot.clear();
+        for (ItemStack stack : bossLootInv) {
+            if (stack == null) continue;
+            Material stackMaterial = stack.getType();
+            if (bossLoot.containsKey(stackMaterial)) {
+                bossLoot.put(stackMaterial, bossLoot.get(stackMaterial) + stack.getAmount());
+            } else {
+                bossLoot.put(stackMaterial, stack.getAmount());
+            }
+        }
+        for (ItemStack stack : defaultLootInv) {
+            if (stack == null) continue;
+            Material stackMaterial = stack.getType();
+            if (defaultLoot.containsKey(stackMaterial)) {
+                defaultLoot.put(stackMaterial, defaultLoot.get(stackMaterial) + stack.getAmount());
+            } else {
+                defaultLoot.put(stackMaterial, stack.getAmount());
+            }
+        }
+        setToConfig();
+        if (save) saveDefaultConfig();
+    }
+
+    public Arena getNextArena() {
+        int nextId = this.id;
+        int minDiff = Integer.MAX_VALUE;
+        for (String stringId : Arena.getArenaIds()) {
+            try {
+                int arenaId = Integer.parseInt(stringId);
+                if (arenaId < nextId && arenaId > this.id) {
+                    nextId = arenaId;
+                }
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+        return Arena.getArena(nextId);
     }
 
     public HashMap<EntityType, Integer> getMobs() {
@@ -241,7 +358,22 @@ public class Arena {
         return name;
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public void setBoss(EntityType newType) {
+        boss = newType;
+        setToConfig();
+        saveDefaultConfig();
+    }
+
     public Location getSpawnLocation() {
         return spawnLocation;
+    }
+
+    public enum LootInventory {
+        BOSS_LOOT(),
+        DEFAULT_LOOT()
     }
 }

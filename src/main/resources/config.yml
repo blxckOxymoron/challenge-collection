@@ -1,4 +1,4 @@
-arenas:
-  arena1:
-    mobs:
+pvearena:
+  spawnegg-mobs:
+    MOOSHROOM: MUSHROOM_COW
 
